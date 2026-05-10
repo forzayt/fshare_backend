@@ -35,7 +35,7 @@ class SessionManager {
       hostSocketId,
       lastActive: now,
       metadata: {},
-      joiners: new Set(),
+      joiners: new Map(),
     });
 
     return sessionId;
@@ -78,10 +78,10 @@ class SessionManager {
     this.sessions.delete(sessionId);
   }
 
-  public joinSession(sessionId: string, joinerSocketId: string): boolean {
+  public joinSession(sessionId: string, joinerSocketId: string, nickname: string): boolean {
     const session = this.getSession(sessionId);
     if (session) {
-      session.joiners.add(joinerSocketId);
+      session.joiners.set(joinerSocketId, nickname);
       return true;
     }
     return false;

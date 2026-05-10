@@ -37,7 +37,7 @@ export function setupSocket(io: Server) {
           success: true, 
           sessionId,
           isResume,
-          joiners: isResume ? Array.from(session?.joiners || []) : []
+          joiners: isResume ? Array.from(session?.joiners.entries() || []).map(([id, nickname]) => ({ id, nickname })) : []
         });
       }
     });
@@ -79,8 +79,8 @@ export function setupSocket(io: Server) {
     // --- Joiner Events ---
 
     // Joiner connects to a session
-    socket.on('joiner:join', (payload: { sessionId: string }, callback) => {
-      const { sessionId } = payload;
+    socket.on('joiner:join', (payload: { sessionId: string, nickname: string }, callback) => {
+      const { sessionId, nickname } = payload;
       const session = sessionManager.getSession(sessionId);
 
       if (!session) {
@@ -90,11 +90,14 @@ export function setupSocket(io: Server) {
 
       // Join the session room
       socket.join(`session_${sessionId}`);
-      sessionManager.joinSession(sessionId, socket.id);
-      console.log(`[Session] Joiner ${socket.id} joined session ${sessionId}`);
+      sessionManager.joinSession(sessionId, socket.id, nickname || `Device ${socket.id.substring(0, 4)}`);
+      console.log(`[Session] Joiner ${socket.id} (${nickname}) joined session ${sessionId}`);
 
       // Notify host that a new joiner arrived
-      io.to(session.hostSocketId).emit('host:joiner_connected', { joinerId: socket.id });
+      io.to(session.hostSocketId).emit('host:joiner_connected', { 
+        joinerId: socket.id,
+        nickname: nickname || `Device ${socket.id.substring(0, 4)}`
+      });
 
       if (typeof callback === 'function') {
         callback({ 
