@@ -152,9 +152,11 @@ export function setupSocket(io: Server) {
     // Note: The actual transfer happens via WebRTC, but signaling the intent helps the UI.
     socket.on('joiner:request_file', (payload: { sessionId: string; fileId: string }, callback) => {
       const { sessionId, fileId } = payload;
+      console.log(`[File] Joiner ${socket.id} requested file ${fileId} in session ${sessionId}`);
       const session = sessionManager.getSession(sessionId);
 
       if (!session) {
+        console.warn(`[File] Session ${sessionId} not found for request from ${socket.id}`);
         if (typeof callback === 'function') callback({ success: false, error: 'Session not found' });
         return;
       }
